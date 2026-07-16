@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OmniUtils | Premium Open Utilities</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    /* ================= DARK MODE DEFAULTS (THEME WORKERS) ================= */
+    body {
+      background-color: #030712;
+      color: #f8fafc;
+      background-image: 
+        radial-gradient(circle at 20% 25%, rgba(99, 102, 241, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 80% 75%, rgba(168, 85, 247, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.06) 0%, transparent 55%);
+      background-attachment: fixed;
+      transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    header {
+      border-color: rgba(30, 41, 59, 0.6);
+    }
+
+    /* Cards Dark State Configuration */
+    .tool-card-box {
+      background-color: rgba(15, 23, 42, 0.4);
+      border-color: rgba(30, 41, 59, 0.8);
+      color: #94a3b8; /* slate-400 description text */
+      backdrop-filter: blur(8px);
+    }
+    .tool-card-title {
+      color: #ffffff;
+    }
+    .icon-wrapper-box {
+      background-color: #0f172a;
+      border-color: #1e293b;
+      color: #c084fc; /* purple-400 */
+    }
+    .share-icon-svg {
+      color: #94a3b8;
+    }
+
+    /* ================= BULLETPROOF LIGHT MODE OVERRIDES ================= */
+    body.light-mode {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+      background-image: 
+        radial-gradient(circle at 20% 25%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 80% 75%, rgba(168, 85, 247, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.04) 0%, transparent 55%) !important;
+      background-attachment: fixed;
+    }
+
+    body.light-mode header {
+      background-color: rgba(255, 255, 255, 0.8) !important;
+      border-color: #e2e8f0 !important;
+    }
+
+    /* Light Mode Quote & Structural Headers Fix */
+    body.light-mode blockquote,
+    body.light-mode h2,
+    body.light-mode h4,
+    body.light-mode footer span {
+      color: #0f172a !important;
+    }
+    body.light-mode #heroDesc {
+      color: #475569 !important; /* slate-600 */
+    }
+
+    /* Light Mode Share button explicit layout fix */
+    body.light-mode .share-icon-svg {
+      color: #475569 !important;
+    }
+
+    /* Light Mode Input Elements Search Box Fix */
+    body.light-mode #toolSearch {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #0f172a !important;
+    }
+
+    /* Light Mode Cards Complete Visual Polish Fix */
+    body.light-mode .tool-card-box {
+      background-color: rgba(255, 255, 255, 0.7) !important;
+      border-color: #e2e8f0 !important;
+      color: #475569 !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(8px);
+    }
+    body.light-mode .tool-card-title {
+      color: #0f172a !important;
+    }
+    body.light-mode .icon-wrapper-box {
+      background-color: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      color: #7c3aed !important; /* Deep visible purple icon */
+    }
+
+    /* Light Mode Footer Text and Links Links Fix */
+    body.light-mode footer {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    body.light-mode footer ul li a,
+    body.light-mode footer p,
+    body.light-mode footer div span {
+      color: #475569 !important;
+    }
+    body.light-mode footer ul li a:hover {
+      color: #7c3aed !important;
+    }
+    body.light-mode .social-icon-btn {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #475569 !important;
+    }
+    body.light-mode .social-icon-btn:hover {
+      color: #7c3aed !important;
+      border-color: #c084fc !important;
+      background-color: #ffffff !important;
+    }
+
+    /* ================= CARD ALIGNMENT & HOVER PHYSICS ================= */
+    .premium-card {
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .premium-card:hover {
+      transform: translateY(-5px);
+    }
+    .premium-card:hover .icon-wrapper-box {
+      box-shadow: 0 0 25px rgba(168, 85, 247, 0.35);
+      border-color: rgba(168, 85, 247, 0.5);
+    }
+
+    /* Ambient background star configurations */
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.1; transform: scale(0.8); }
+      50% { opacity: 0.8; transform: scale(1.2); }
+    }
+    .star {
+      position: absolute;
+      background-color: white;
+      border-radius: 50%;
+      animation: twinkle var(--duration) infinite ease-in-out;
+    }
+    body.light-mode .star {
+      background-color: #6366f1;
+      opacity: 0.08;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col relative overflow-x-hidden">
+
+  <div id="starField" class="absolute inset-0 z-0 pointer-events-none opacity-40"></div>
+
+  <header id="mainNav" class="sticky top-0 z-50 backdrop-blur-md bg-slate-950/70 border-b w-full transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-6 sm:px-8 py-4 flex items-center justify-between">
+      
+      <div class="flex items-center gap-3">
+        <span class="text-2xl font-black tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          OmniUtils
+        </span>
+        <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+          Ad Free
+        </span>
+      </div>
+
+      <div class="flex items-center gap-4 w-full max-w-lg justify-end">
+        <div class="relative w-full max-w-xs hidden sm:block">
+          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+          <input 
+            type="text" 
+            id="toolSearch" 
+            placeholder="Search tools..." 
+            class="w-full pl-9 pr-4 py-1.5 text-sm rounded-full bg-slate-900 border border-slate-800 focus:outline-none focus:border-purple-500 text-slate-200 transition-all"
+            onkeyup="filterTools()"
+          />
+        </div>
+
+        <button onclick="toggleTheme()" class="p-2 rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-900 transition-colors cursor-pointer body-[.light-mode]:border-slate-300 body-[.light-mode]:bg-white" title="Toggle Theme Grid">
+          <i id="themeIcon" data-lucide="sun" class="w-4 h-4 text-amber-400"></i>
+        </button>
+
+        <button onclick="shareWebsite()" class="p-2 rounded-full border border-slate-800 bg-slate-900/40 hover:bg-slate-900 transition-colors cursor-pointer body-[.light-mode]:border-slate-300 body-[.light-mode]:bg-white" title="Share App Link">
+          <i data-lucide="share-2" class="share-icon-svg w-4 h-4 transition-colors"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <section class="relative overflow-hidden pt-12 pb-8 z-10 w-full">
+    <div class="max-w-7xl mx-auto px-6 sm:px-8 text-center relative z-10">
+      <p class="text-[10px] uppercase tracking-[0.3em] font-bold text-purple-400 mb-2.5 body-[.light-mode]:text-purple-600">Architecture of Efficiency</p>
+      <blockquote id="heroQuote" class="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight mb-4 transition-colors">
+        “Simplicity is the ultimate sophistication.”
+      </blockquote>
+      <p id="heroDesc" class="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto transition-colors">
+        A private suite of local client-side digital micro-utilities. No processing queues, zero cloud data exposures, and absolute execution clarity.
+      </p>
+    </div>
+  </section>
+
+  <main class="max-w-7xl mx-auto px-6 sm:px-8 py-6 flex-grow w-full z-10">
+    
+    <div class="mb-10 text-left">
+      <h2 class="text-2xl font-extrabold tracking-tight transition-colors">
+        Tools
+      </h2>
+      <div class="w-8 h-0.5 bg-purple-500 mt-1.5 rounded"></div>
+    </div>
+
+    <div id="toolsGrid" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-stretch">
+
+      <div class="tool-card premium-card group flex flex-col items-start text-left h-full">
+        <div class="icon-wrapper-box w-12 h-12 border rounded-xl flex items-center justify-center mb-3 transition-all duration-300 flex-shrink-0">
+          <i data-lucide="qr-code" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+        </div>
+        <div class="tool-card-box w-full border rounded-xl p-4 flex-grow flex flex-col justify-start transition-all">
+          <h3 class="tool-card-title text-sm font-bold mb-1 group-hover:text-purple-500 transition-colors">QR Code Engine</h3>
+          <p class="text-[11px] leading-relaxed">Encode text elements or target web links instantly into square arrays.</p>
+        </div>
+      </div>
+
+      <div class="tool-card premium-card group flex flex-col items-start text-left h-full">
+        <div class="icon-wrapper-box w-12 h-12 border rounded-xl flex items-center justify-center mb-3 transition-all duration-300 flex-shrink-0">
+          <i data-lucide="radio" class="w-5 h-5 group-hover:animate-pulse"></i>
+        </div>
+        <div class="tool-card-box w-full border rounded-xl p-4 flex-grow flex flex-col justify-start transition-all">
+          <h3 class="tool-card-title text-sm font-bold mb-1 group-hover:text-purple-500 transition-colors">Morse Code Hub</h3>
+          <p class="text-[11px] leading-relaxed">Bidirectional structural translation processing alphabet variables into standard signals.</p>
+        </div>
+      </div>
+
+      <div class="tool-card premium-card group flex flex-col items-start text-left h-full">
+        <div class="icon-wrapper-box w-12 h-12 border rounded-xl flex items-center justify-center mb-3 transition-all duration-300 flex-shrink-0">
+          <i data-lucide="eye" class="w-5 h-5 group-hover:scale-y-50 transition-transform"></i>
+        </div>
+        <div class="tool-card-box w-full border rounded-xl p-4 flex-grow flex flex-col justify-start transition-all">
+          <h3 class="tool-card-title text-sm font-bold mb-1 group-hover:text-purple-500 transition-colors">Stegano Crypt</h3>
+          <p class="text-[11px] leading-relaxed">Inject custom private payload data matrices invisibly inside image pixel arrays completely offline.</p>
+        </div>
+      </div>
+
+      <div class="tool-card premium-card group flex flex-col items-start text-left h-full">
+        <div class="icon-wrapper-box w-12 h-12 border rounded-xl flex items-center justify-center mb-3 transition-all duration-300 flex-shrink-0">
+          <i data-lucide="file-text" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+        </div>
+        <div class="tool-card-box w-full border rounded-xl p-4 flex-grow flex flex-col justify-start transition-all">
+          <h3 class="tool-card-title text-sm font-bold mb-1 group-hover:text-purple-500 transition-colors">PDF Transformer</h3>
+          <p class="text-[11px] leading-relaxed">Merge, compress, slice or re-order document file structures locally inside browser runtime grids.</p>
+        </div>
+      </div>
+
+      <div class="tool-card premium-card group flex flex-col items-start text-left h-full">
+        <div class="icon-wrapper-box w-12 h-12 border rounded-xl flex items-center justify-center mb-3 transition-all duration-300 flex-shrink-0">
+          <i data-lucide="image" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+        </div>
+        <div class="tool-card-box w-full border rounded-xl p-4 flex-grow flex flex-col justify-start transition-all">
+          <h3 class="tool-card-title text-sm font-bold mb-1 group-hover:text-purple-500 transition-colors">Image Optimizer</h3>
+          <p class="text-[11px] leading-relaxed">Scale assets bounds, strip metadata tags, or parse dimensions through spatial layout grids.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="border-t mt-auto w-full z-10 bg-slate-950/60 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-6 sm:px-8 pt-12 pb-6">
+      
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-8 pb-10">
+        
+        <div class="md:col-span-2 space-y-3">
+          <span class="text-xl font-black tracking-tight text-white transition-colors">
+            OmniUtils
+          </span>
+          <p class="text-xs leading-relaxed max-w-sm">
+            A private suite of local client-side digital micro-utilities. No processing queues, zero cloud data exposures, and absolute execution clarity.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold tracking-wide text-white mb-3">Pages</h4>
+          <ul class="space-y-2 text-xs">
+            <li><a href="#" class="hover:text-purple-500 transition-colors">Home</a></li>
+            <li><a href="#" class="hover:text-purple-500 transition-colors">Feature</a></li>
+            <li><a href="#" class="hover:text-purple-500 transition-colors">About</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold tracking-wide text-white mb-3">Utility</h4>
+          <ul class="space-y-2 text-xs">
+            <li><a href="#" class="hover:text-purple-500 transition-colors">Terms &amp; Conditions</a></li>
+            <li><a href="#" class="hover:text-purple-500 transition-colors">Privacy Policy</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold tracking-wide text-white mb-4">Contact Us</h4>
+          
+          <div class="flex flex-row items-center gap-3">
+            <a href="mailto:Support@omniutils.io" class="social-icon-btn w-9 h-9 rounded-full border border-slate-800 bg-slate-900 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 hover:shadow-[0_0_12px_rgba(168,85,247,0.4)]" title="Gmail Mail Dispatch">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="16" x="2" y="4" rx="2"/>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+              </svg>
+            </a>
+            <a href="#" class="social-icon-btn w-9 h-9 rounded-full border border-slate-800 bg-slate-900 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 hover:shadow-[0_0_12px_rgba(168,85,247,0.4)]" title="LinkedIn Connection">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                <rect x="2" y="9" width="4" height="12"/>
+                <circle cx="4" cy="4" r="2"/>
+              </svg>
+            </a>
+            <a href="#" class="social-icon-btn w-9 h-9 rounded-full border border-slate-800 bg-slate-900 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 hover:shadow-[0_0_12px_rgba(168,85,247,0.4)]" title="Instagram Network">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+              </svg>
+            </a>
+            <a href="#" class="social-icon-btn w-9 h-9 rounded-full border border-slate-800 bg-slate-900 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:-translate-y-0.5 hover:shadow-[0_0_12px_rgba(168,85,247,0.4)]" title="GitHub Git Engine Repository Hub">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="border-t border-slate-900 pt-6 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-500 body-[.light-mode]:border-slate-200">
+        <p>© 2026 OmniUtils Core System. Open Source Architecture.</p>
+        <p>Powered by Local Engine Modules</p>
+      </div>
+
+    </div>
+  </footer>
+
+  <script>
+    // Initialize Graphics Assets Vectors Elements shapes
+    lucide.createIcons();
+
+    // 1. Light Mode Action Theme Switch Toggle Trigger Hook
+    function toggleTheme() {
+      const body = document.body;
+      const icon = document.getElementById('themeIcon');
+      
+      if (!body.classList.contains('light-mode')) {
+        body.classList.add('light-mode');
+        icon.setAttribute('data-lucide', 'moon');
+        icon.className = "w-4 h-4 text-purple-600";
+      } else {
+        body.classList.remove('light-mode');
+        icon.setAttribute('data-lucide', 'sun');
+        icon.className = "w-4 h-4 text-amber-400";
+      }
+      
+      // Force compile state vectors changes
+      lucide.createIcons();
+    }
+
+    // 2. Automated Ambient Particle Stars Space Canvas Generator Layout
+    function generateStars() {
+      const field = document.getElementById('starField');
+      const starCount = 40;
+      
+      for(let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        const size = Math.random() * 2 + 1;
+        const delay = Math.random() * 5;
+        const duration = Math.random() * 4 + 3;
+        
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.setProperty('--duration', `${duration}s`);
+        star.style.animationDelay = `${delay}s`;
+        
+        field.appendChild(star);
+      }
+    }
+    generateStars();
+
+    // 3. Web Window Share Endpoint API integration hook
+    function shareWebsite() {
+      if (navigator.share) {
+        navigator.share({
+          title: 'OmniUtils Pro Tool Grid Suite',
+          url: window.location.href
+        }).catch(err => console.log(err));
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert('OmniUtils link copied directly to system clipboard.');
+      }
+    }
+
+    // 4. Live Search Box Tool Grid Filter System
+    function filterTools() {
+      const input = document.getElementById('toolSearch').value.toLowerCase();
+      const cards = document.getElementsByClassName('tool-card');
+      
+      for (let i = 0; i < cards.length; i++) {
+        const title = cards[i].querySelector('h3').innerText.toLowerCase();
+        const text = cards[i].querySelector('p').innerText.toLowerCase();
+        
+        if (title.includes(input) || text.includes(input)) {
+          cards[i].style.display = "flex";
+        } else {
+          cards[i].style.display = "none";
+        }
+      }
+    }
+  </script>
+</body>
+</html>
