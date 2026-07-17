@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Morse Code Translator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        .morse-font {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            letter-spacing: 0.1em;
+        }
+
+        /* Custom scrollbar for textareas */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        textarea::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        textarea::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Custom range slider styling */
+        input[type='range'] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type='range']::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+            transition: transform 0.15s ease;
+        }
+
+        input[type='range']::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        input[type='range']::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col p-4 md:p-8">
+
+    <main class="max-w-5xl w-full mx-auto flex-grow flex flex-col gap-6">
+        <!-- Header -->
+        <header class="flex items-center gap-4 mb-4">
+            <div class="bg-indigo-600 p-3 rounded-2xl shadow-lg shadow-indigo-500/20">
+                <i data-lucide="radio" class="w-8 h-8 text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight">Morse Code Translator</h1>
+                <p class="text-slate-400">Translate text to Morse code and vice versa in real-time.</p>
+            </div>
+        </header>
+
+        <!-- Main Translation Interface -->
+        <div class="flex flex-col md:flex-row gap-4 items-stretch">
+
+            <!-- Input Panel -->
+            <div
+                class="flex-1 flex flex-col bg-slate-800 rounded-3xl border border-slate-700 overflow-hidden shadow-xl">
+                <div class="bg-slate-800/50 p-4 border-b border-slate-700 flex justify-between items-center">
+                    <h2 id="inputLabel" class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Text</h2>
+                    <button onclick="clearInput()" class="text-slate-400 hover:text-white transition-colors"
+                        title="Clear">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <textarea id="inputBox"
+                    class="flex-1 w-full p-6 bg-transparent resize-none outline-none text-lg placeholder-slate-500 transition-colors"
+                    placeholder="Type here..." oninput="handleInput()"></textarea>
+
+                <!-- Morse Typing Options (Visible only in Morse -> Text mode) -->
+                <div id="morseKeyboard"
+                    class="hidden bg-slate-900/50 p-4 border-t border-slate-700 grid grid-cols-5 gap-2">
+                    <button onclick="typeMorse('.')"
+                        class="col-span-1 bg-slate-700 hover:bg-indigo-500 text-white rounded-xl py-3 text-2xl font-bold transition-colors active:scale-95 shadow-md">.</button>
+                    <button onclick="typeMorse('-')"
+                        class="col-span-1 bg-slate-700 hover:bg-indigo-500 text-white rounded-xl py-3 text-2xl font-bold transition-colors active:scale-95 shadow-md">-</button>
+                    <button onclick="typeMorse(' ')"
+                        class="col-span-1 bg-slate-700 hover:bg-slate-600 text-white rounded-xl py-3 text-xs font-semibold transition-colors active:scale-95 shadow-md flex flex-col items-center justify-center gap-1">
+                        <i data-lucide="space" class="w-4 h-4"></i>
+                        <span>Letter</span>
+                    </button>
+                    <button onclick="typeMorse(' / ')"
+                        class="col-span-1 bg-slate-700 hover:bg-slate-600 text-white rounded-xl py-3 text-xs font-semibold transition-colors active:scale-95 shadow-md flex flex-col items-center justify-center gap-1">
+                        <i data-lucide="arrow-right-to-line" class="w-4 h-4"></i>
+                        <span>Word</span>
+                    </button>
+                    <button onclick="typeBackspace()"
+                        class="col-span-1 bg-slate-700 hover:bg-red-500 text-white rounded-xl py-3 flex items-center justify-center transition-colors active:scale-95 shadow-md">
+                        <i data-lucide="delete" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Swap Button -->
+            <div class="flex items-center justify-center">
+                <button onclick="swapMode()"
+                    class="bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-full shadow-lg shadow-indigo-500/30 transition-all hover:rotate-180 active:scale-90"
+                    title="Swap Translation Direction">
+                    <i data-lucide="arrow-left-right" class="w-6 h-6 md:rotate-0 rotate-90"></i>
+                </button>
+            </div>
+
+            <!-- Output Panel -->
+            <div
+                class="flex-1 flex flex-col bg-slate-800 rounded-3xl border border-slate-700 overflow-hidden shadow-xl">
+                <div class="bg-slate-800/50 p-4 border-b border-slate-700 flex justify-between items-center">
+                    <h2 id="outputLabel" class="text-sm font-semibold text-slate-300 uppercase tracking-wider">Morse
+                        Code</h2>
+                    <div class="flex gap-3">
+                        <button onclick="copyOutput()" class="text-slate-400 hover:text-white transition-colors"
+                            title="Copy to clipboard">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <textarea id="outputBox"
+                    class="flex-1 w-full p-6 bg-transparent resize-none outline-none text-lg text-indigo-300 morse-font"
+                    readonly placeholder="Translation will appear here..."></textarea>
+            </div>
+
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="flex flex-wrap justify-center items-center gap-4 mt-2">
+            <button id="playBtn" onclick="playMorseAudio()"
+                class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-2xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95 flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="volume-2" class="w-5 h-5"></i>
+                <span>Play Audio</span>
+            </button>
+            <button id="saveMp3Btn" onclick="saveMorseMp3()"
+                class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-2xl shadow-lg shadow-indigo-600/20 transition-all active:scale-95 flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                <span>Save MP3</span>
+            </button>
+        </div>
+
+        <!-- Audio Settings Panel -->
+        <div class="bg-slate-800 rounded-3xl border border-slate-700 p-6 shadow-xl mt-2">
+            <h2 class="text-lg font-bold text-blue-400 mb-5">Audio Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="text-sm text-slate-300 mb-2 block">Frequency: <span id="freqValue"
+                            class="text-white font-semibold">600</span>Hz</label>
+                    <input type="range" id="freqSlider" min="400" max="800" value="600" step="1"
+                        oninput="updateFreqLabel()">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-300 mb-2 block">Speed: <span id="speedValue"
+                            class="text-white font-semibold">15</span> WPM</label>
+                    <input type="range" id="speedSlider" min="5" max="40" value="15" step="1"
+                        oninput="updateSpeedLabel()">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Custom Modal for Alerts (avoids browser default alert) -->
+    <div id="toast"
+        class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-800 border border-slate-600 text-white px-6 py-3 rounded-full shadow-2xl opacity-0 pointer-events-none transition-opacity duration-300 z-50 flex items-center gap-2">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400"></i>
+        <span id="toastMsg">Copied!</span>
+    </div>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Standard Morse Code Dictionary
+        const MORSE_CODE = {
+            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+            'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+            'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+            'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+            'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
+            '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
+            '8': '---..', '9': '----.', '.': '.-.-.-', ',': '--..--', '?': '..--..',
+            '\'': '.----.', '!': '-.-.--', '/': '-..-.', '(': '-.--.', ')': '-.--.-',
+            '&': '.-...', ':': '---...', ';': '-.-.-.', '=': '-...-', '+': '.-.-.',
+            '-': '-....-', '_': '..--.-', '"': '.-..-.', '$': '...-..-', '@': '.--.-.'
+        };
+        const REVERSE_MORSE = Object.fromEntries(Object.entries(MORSE_CODE).map(([k, v]) => [v, k]));
+
+        // Application State
+        let isTextToMorse = true;
+        let isPlaying = false;
+        let shouldStopPlaying = false;
+        let isSaving = false;
+
+        // DOM Elements
+        const inputBox = document.getElementById('inputBox');
+        const outputBox = document.getElementById('outputBox');
+        const inputLabel = document.getElementById('inputLabel');
+        const outputLabel = document.getElementById('outputLabel');
+        const morseKeyboard = document.getElementById('morseKeyboard');
+        const playBtn = document.getElementById('playBtn');
+        const saveMp3Btn = document.getElementById('saveMp3Btn');
+
+        // Update button states based on presence of morse code
+        function updateButtonStates() {
+            const morseText = isTextToMorse ? outputBox.value : inputBox.value;
+            const hasMorse = morseText && morseText.trim().length > 0;
+
+            // If playing, we don't disable playBtn so user can click Stop
+            playBtn.disabled = (!hasMorse && !isPlaying) || isSaving;
+            saveMp3Btn.disabled = !hasMorse || isPlaying || isSaving;
+        }
+
+        // Translation Logic
+        function translate() {
+            const input = inputBox.value;
+            if (!input.trim()) {
+                outputBox.value = '';
+                updateButtonStates();
+                return;
+            }
+
+            if (isTextToMorse) {
+                // Text to Morse
+                const translated = input.toUpperCase().split('').map(char => {
+                    if (char === ' ' || char === '\n') return '/';
+                    return MORSE_CODE[char] || char; // Keep unrecognized chars
+                }).join(' ');
+                outputBox.value = translated;
+            } else {
+                // Morse to Text
+                const words = input.trim().split(/[\s|]+\/[\s|]+/); // Split by word divider
+                const translated = words.map(word => {
+                    return word.split(' ').map(code => {
+                        if (code === '/' || code === '') return ' ';
+                        return REVERSE_MORSE[code] || code; // Keep unrecognized codes
+                    }).join('');
+                }).join(' ');
+                outputBox.value = translated;
+            }
+            updateButtonStates();
+        }
+
+        function handleInput() {
+            translate();
+        }
+
+        function swapMode() {
+            isTextToMorse = !isTextToMorse;
+
+            // Swap Labels
+            inputLabel.innerText = isTextToMorse ? "Text" : "Morse Code";
+            outputLabel.innerText = isTextToMorse ? "Morse Code" : "Text";
+
+            // Toggle Fonts and styling
+            if (isTextToMorse) {
+                inputBox.classList.remove('morse-font', 'text-indigo-300');
+                outputBox.classList.add('morse-font', 'text-indigo-300');
+                morseKeyboard.classList.add('hidden');
+            } else {
+                inputBox.classList.add('morse-font', 'text-indigo-300');
+                outputBox.classList.remove('morse-font', 'text-indigo-300');
+                morseKeyboard.classList.remove('hidden');
+            }
+
+            // Swap text contents
+            const temp = inputBox.value;
+            inputBox.value = outputBox.value;
+            outputBox.value = temp;
+
+            updateButtonStates();
+            inputBox.focus();
+        }
+
+        // Custom Keyboard Functions
+        function typeMorse(char) {
+            inputBox.value += char;
+            handleInput();
+            inputBox.focus();
+        }
+
+        function typeBackspace() {
+            inputBox.value = inputBox.value.slice(0, -1);
+            handleInput();
+            inputBox.focus();
+        }
+
+        function clearInput() {
+            inputBox.value = '';
+            outputBox.value = '';
+            updateButtonStates();
+            inputBox.focus();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 2000);
+        }
+
+        function copyOutput() {
+            if (!outputBox.value) return;
+            // standard clipboard API
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(outputBox.value).then(() => {
+                    showToast("Copied to clipboard!");
+                });
+            } else {
+                // Fallback for non-HTTPS or iframe issues
+                outputBox.select();
+                document.execCommand('copy');
+                showToast("Copied to clipboard!");
+                outputBox.setSelectionRange(0, 0); // deselect
+            }
+        }
+
+        // Web Audio API for Morse Code Playback
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        async function playMorseAudio() {
+            const morseText = isTextToMorse ? outputBox.value : inputBox.value;
+            if (!morseText) return;
+
+            if (isPlaying) {
+                shouldStopPlaying = true;
+                return;
+            }
+
+            isPlaying = true;
+            shouldStopPlaying = false;
+            updateButtonStates();
+
+            playBtn.innerHTML = '<i data-lucide="square" class="w-5 h-5"></i><span>Stop</span>';
+            lucide.createIcons();
+            playBtn.classList.replace('bg-emerald-600', 'bg-red-600');
+            playBtn.classList.replace('hover:bg-emerald-500', 'hover:bg-red-500');
+
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+
+            const freq = parseInt(document.getElementById('freqSlider').value);
+            const wpm = parseInt(document.getElementById('speedSlider').value);
+            const dotDuration = 1200 / wpm; // ms (standard PARIS timing)
+
+            const playBeep = (duration) => {
+                return new Promise(resolve => {
+                    if (shouldStopPlaying) {
+                        resolve();
+                        return;
+                    }
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+
+                    // Smooth envelope to avoid clicks
+                    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 0.01);
+                    gain.gain.setValueAtTime(1, audioCtx.currentTime + (duration / 1000) - 0.01);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + (duration / 1000));
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + (duration / 1000));
+
+                    setTimeout(resolve, duration);
+                });
+            };
+
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            for (let i = 0; i < morseText.length; i++) {
+                if (shouldStopPlaying) break;
+                const char = morseText[i];
+                if (char === '.') {
+                    await playBeep(dotDuration);
+                    await sleep(dotDuration); // intra-character gap
+                } else if (char === '-') {
+                    await playBeep(dotDuration * 3);
+                    await sleep(dotDuration);
+                } else if (char === ' ') {
+                    await sleep(dotDuration * 2); // inter-character gap (+1 from previous)
+                } else if (char === '/') {
+                    await sleep(dotDuration * 6); // inter-word gap (+1 from previous)
+                }
+            }
+
+            isPlaying = false;
+            shouldStopPlaying = false;
+            playBtn.innerHTML = '<i data-lucide="volume-2" class="w-5 h-5"></i><span>Play Audio</span>';
+            lucide.createIcons();
+            playBtn.classList.replace('bg-red-600', 'bg-emerald-600');
+            playBtn.classList.replace('hover:bg-red-500', 'hover:bg-emerald-500');
+            updateButtonStates();
+        }
+
+        async function saveMorseMp3() {
+            const morseText = isTextToMorse ? outputBox.value : inputBox.value;
+            if (!morseText || isSaving) return;
+
+            isSaving = true;
+            updateButtonStates();
+
+            const originalSaveContent = saveMp3Btn.innerHTML;
+            saveMp3Btn.innerHTML = '<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Generating...</span>';
+            lucide.createIcons();
+
+            try {
+                const sampleRate = 44100;
+                const wpm = parseInt(document.getElementById('speedSlider').value);
+                const dotDuration = (1200 / wpm) / 1000; // seconds (standard PARIS timing)
+
+                // Calculate precise timeline of beeps
+                let currentTime = 0;
+                const tones = [];
+
+                for (let i = 0; i < morseText.length; i++) {
+                    const char = morseText[i];
+                    if (char === '.') {
+                        tones.push({ time: currentTime, duration: dotDuration });
+                        currentTime += dotDuration * 2;
+                    } else if (char === '-') {
+                        tones.push({ time: currentTime, duration: dotDuration * 3 });
+                        currentTime += dotDuration * 4;
+                    } else if (char === ' ') {
+                        currentTime += dotDuration * 2;
+                    } else if (char === '/') {
+                        currentTime += dotDuration * 6;
+                    }
+                }
+
+                const totalDuration = currentTime;
+                if (totalDuration === 0) {
+                    throw new Error("No Morse code text to generate audio for.");
+                }
+
+                // Render using OfflineAudioContext
+                const offlineCtx = new OfflineAudioContext(1, Math.ceil(sampleRate * totalDuration), sampleRate);
+
+                tones.forEach(tone => {
+                    const osc = offlineCtx.createOscillator();
+                    const gain = offlineCtx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.value = parseInt(document.getElementById('freqSlider').value);
+
+                    gain.gain.setValueAtTime(0, tone.time);
+                    gain.gain.linearRampToValueAtTime(1, tone.time + 0.01);
+                    gain.gain.setValueAtTime(1, tone.time + tone.duration - 0.01);
+                    gain.gain.linearRampToValueAtTime(0, tone.time + tone.duration);
+
+                    osc.connect(gain);
+                    gain.connect(offlineCtx.destination);
+
+                    osc.start(tone.time);
+                    osc.stop(tone.time + tone.duration);
+                });
+
+                const renderedBuffer = await offlineCtx.startRendering();
+                const floatBuffer = renderedBuffer.getChannelData(0);
+
+                // Convert Float32Array to 16-bit signed PCM
+                const samples = new Int16Array(floatBuffer.length);
+                for (let i = 0; i < floatBuffer.length; i++) {
+                    let s = Math.max(-1, Math.min(1, floatBuffer[i]));
+                    samples[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                }
+
+                // Encode to MP3 using lamejs
+                if (typeof lamejs === 'undefined') {
+                    throw new Error("MP3 Encoder library (lamejs) not loaded.");
+                }
+                const mp3encoder = new lamejs.Mp3Encoder(1, sampleRate, 128);
+                const mp3Data = [];
+                const sampleBlockSize = 1152;
+
+                for (let i = 0; i < samples.length; i += sampleBlockSize) {
+                    const sampleChunk = samples.subarray(i, i + sampleBlockSize);
+                    const mp3buf = mp3encoder.encodeBuffer(sampleChunk);
+                    if (mp3buf.length > 0) {
+                        mp3Data.push(mp3buf);
+                    }
+                }
+
+                const mp3bufFlush = mp3encoder.flush();
+                if (mp3bufFlush.length > 0) {
+                    mp3Data.push(mp3bufFlush);
+                }
+
+                const blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'morse-code.mp3';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showToast("MP3 file downloaded successfully!");
+            } catch (err) {
+                console.error("Error generating MP3:", err);
+                showToast("Error generating MP3 file.");
+            } finally {
+                isSaving = false;
+                saveMp3Btn.innerHTML = originalSaveContent;
+                lucide.createIcons();
+                updateButtonStates();
+            }
+        }
+
+        // Slider label update helpers
+        function updateFreqLabel() {
+            document.getElementById('freqValue').textContent = document.getElementById('freqSlider').value;
+        }
+        function updateSpeedLabel() {
+            document.getElementById('speedValue').textContent = document.getElementById('speedSlider').value;
+        }
+
+        // Initialize button states on load
+        updateButtonStates();
+    </script>
+</body>
+
+</html>
