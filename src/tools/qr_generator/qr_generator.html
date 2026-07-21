@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium QR Code Generator | OmniUtils</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+
+    <style>
+        body {
+            background-color: #030712;
+            color: #f8fafc;
+            background-image:
+                radial-gradient(circle at 10% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 90% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .tab-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-btn.active {
+            background-color: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.5);
+            color: #818cf8;
+        }
+
+        /* Custom range slider styling */
+        input[type='range'] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 9999px;
+            background: #1e293b;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type='range']::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #818cf8;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(129, 140, 248, 0.5);
+            transition: transform 0.15s ease;
+        }
+
+        input[type='range']::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Embedded styles for beautiful canvas rounded borders */
+        #qrCanvasContainer {
+            position: relative;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8 flex flex-col items-center justify-center gap-8">
+
+        <!-- Top-Center Title Area -->
+        <div class="text-center max-w-2xl">
+            <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 text-xs font-semibold mb-4">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                <span>Advanced Matrix Encoder</span>
+            </div>
+            <h1
+                class="text-4xl sm:text-5xl font-black tracking-tight bg-gradient-to-r from-indigo-200 via-purple-300 to-emerald-200 bg-clip-text text-transparent mb-3">
+                The QR Code Generator
+            </h1>
+            <p class="text-slate-400 text-sm sm:text-base leading-relaxed">
+                Encode URLs, documents, contact cards, and text instantly on-the-fly. Personalize your matrix structure,
+                colors, and overlays entirely in-browser.
+            </p>
+        </div>
+
+        <!-- Big Box Layout -->
+        <div class="glass-panel w-full rounded-3xl p-6 sm:p-8 flex flex-col lg:flex-row gap-8 shadow-2xl">
+
+            <!-- LEFT SIDE: QR Code Display, Customize & Share/Download Actions -->
+            <div
+                class="w-full lg:w-2/5 flex flex-col items-center justify-start gap-6 border-b lg:border-b-0 lg:border-r border-slate-800 pb-8 lg:pb-0 lg:pr-8">
+
+                <!-- QR Code Wrapper Box -->
+                <div class="flex flex-col items-center gap-4">
+                    <span class="text-xs uppercase tracking-widest font-bold text-slate-500">Live Matrix Output</span>
+
+                    <div id="qrCanvasContainer" class="p-4 bg-white rounded-2xl flex items-center justify-center">
+                        <canvas id="qrCanvas" width="260" height="260" class="rounded-lg shadow-sm"></canvas>
+                    </div>
+
+                    <p id="qrStats" class="text-[10px] text-slate-500 tracking-wider">
+                        Ready to scan • Default welcome state
+                    </p>
+                </div>
+
+                <!-- Customize Option Button -->
+                <button id="customizeBtn" onclick="toggleCustomizePanel()"
+                    class="w-full sm:w-64 py-3 px-4 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800/80 text-white font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-md group">
+                    <i data-lucide="palette"
+                        class="w-4 h-4 text-purple-400 group-hover:rotate-12 transition-transform"></i>
+                    <span>Customize QR Design</span>
+                    <i id="customizeChevron" data-lucide="chevron-down"
+                        class="w-4 h-4 text-slate-500 transition-transform"></i>
+                </button>
+
+                <!-- Dropdown Customize Panel -->
+                <div id="customizePanel"
+                    class="w-full sm:w-64 max-h-0 overflow-hidden transition-all duration-500 ease-in-out flex flex-col gap-4">
+                    <div class="bg-slate-950/70 rounded-xl p-4 border border-slate-850 flex flex-col gap-4 text-xs">
+
+                        <!-- Foreground Color Selection -->
+                        <div>
+                            <label class="block text-slate-400 font-semibold mb-2">QR Code Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="colorDark" value="#000000" onchange="generateQrCode()"
+                                    class="w-8 h-8 rounded border-0 cursor-pointer bg-transparent">
+                                <span class="text-slate-300 font-mono text-[11px]" id="colorDarkLabel">#000000</span>
+                            </div>
+                        </div>
+
+                        <!-- Background Color Selection -->
+                        <div>
+                            <label class="block text-slate-400 font-semibold mb-2">Background Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="colorLight" value="#ffffff" onchange="generateQrCode()"
+                                    class="w-8 h-8 rounded border-0 cursor-pointer bg-transparent">
+                                <span class="text-slate-300 font-mono text-[11px]" id="colorLightLabel">#ffffff</span>
+                            </div>
+                        </div>
+
+                        <!-- Center Logo Overlay -->
+                        <div>
+                            <label class="block text-slate-400 font-semibold mb-2">Center Logo</label>
+                            <select id="centerLogo" onchange="generateQrCode()"
+                                class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 outline-none focus:border-indigo-500 text-xs">
+                                <option value="none">None (Standard)</option>
+                                <option value="star">⭐ Star Emoji</option>
+                                <option value="link">🔗 Link Icon</option>
+                                <option value="user">👤 User Icon</option>
+                                <option value="email">✉️ Mail Icon</option>
+                                <option value="heart">❤️ Heart Emoji</option>
+                            </select>
+                        </div>
+
+                        <!-- Dot Style Selection -->
+                        <div>
+                            <label class="block text-slate-400 font-semibold mb-2">Dot Style</label>
+                            <div class="flex gap-2">
+                                <button onclick="setDotStyle('square')" id="dotStyleSquare"
+                                    class="flex-1 py-1.5 rounded-lg border border-indigo-500/50 bg-indigo-500/10 text-white font-medium">Square</button>
+                                <button onclick="setDotStyle('rounded')" id="dotStyleRounded"
+                                    class="flex-1 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-300 font-medium">Circle</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Share & Download Logos Button Group -->
+                <div class="flex items-center justify-center gap-4 w-full border-t border-slate-850 pt-4">
+                    <button onclick="shareQr()"
+                        class="w-12 h-12 rounded-full border border-slate-800 bg-slate-900 hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-indigo-400 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-[0_0_15px_rgba(99,102,241,0.2)] cursor-pointer"
+                        title="Share QR Link / Image">
+                        <i data-lucide="share-2" class="w-5 h-5"></i>
+                    </button>
+
+                    <button onclick="downloadQr()"
+                        class="w-12 h-12 rounded-full border border-slate-800 bg-slate-900 hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-emerald-400 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] cursor-pointer"
+                        title="Download QR Code PNG">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- RIGHT SIDE: Content Options Selectors and Dynamic Forms -->
+            <div class="w-full lg:w-3/5 flex flex-col justify-start gap-6">
+
+                <!-- Options Tabs Area -->
+                <div>
+                    <span class="text-xs uppercase tracking-widest font-bold text-slate-500 block mb-3">Select QR
+                        Type</span>
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+
+                        <button onclick="switchTab('url')" id="tab-url"
+                            class="tab-btn active border border-slate-800 bg-slate-950/30 rounded-xl p-3 flex flex-col items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer select-none">
+                            <i data-lucide="link" class="w-4 h-4"></i>
+                            <span>URL</span>
+                        </button>
+
+                        <button onclick="switchTab('pdf')" id="tab-pdf"
+                            class="tab-btn border border-slate-800 bg-slate-950/30 rounded-xl p-3 flex flex-col items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer select-none">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                            <span>PDF</span>
+                        </button>
+
+                        <button onclick="switchTab('image')" id="tab-image"
+                            class="tab-btn border border-slate-800 bg-slate-950/30 rounded-xl p-3 flex flex-col items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer select-none">
+                            <i data-lucide="image" class="w-4 h-4"></i>
+                            <span>Image</span>
+                        </button>
+
+                        <button onclick="switchTab('contact')" id="tab-contact"
+                            class="tab-btn border border-slate-800 bg-slate-950/30 rounded-xl p-3 flex flex-col items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer select-none">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                            <span>Contact</span>
+                        </button>
+
+                        <button onclick="switchTab('mail')" id="tab-mail"
+                            class="tab-btn border border-slate-800 bg-slate-950/30 rounded-xl p-3 flex flex-col items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer select-none">
+                            <i data-lucide="mail" class="w-4 h-4"></i>
+                            <span>Email</span>
+                        </button>
+
+                        <button onclick="switchTab('text')" id="tab-text"
+                            class="tab-btn border border-slate-800 bg-slate-950/30 rounded-xl p-3 flex flex-col items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-white cursor-pointer select-none">
+                            <i data-lucide="type" class="w-4 h-4"></i>
+                            <span>Text</span>
+                        </button>
+
+                    </div>
+                </div>
+
+                <!-- Dynamic Input Form Panels -->
+                <div
+                    class="flex-grow bg-slate-950/40 rounded-2xl border border-slate-850 p-5 min-h-[220px] flex flex-col justify-start">
+
+                    <!-- URL PANEL -->
+                    <div id="panel-url" class="form-panel flex flex-col gap-4">
+                        <div>
+                            <label
+                                class="block text-xs uppercase tracking-wider text-slate-400 font-bold mb-3">Redirection
+                                Destination Type</label>
+                            <div class="flex gap-3">
+                                <button onclick="setUrlType('single')" id="urlTypeSingle"
+                                    class="py-2 px-4 rounded-xl border border-indigo-500/50 bg-indigo-500/10 text-white text-xs font-semibold select-none cursor-pointer">
+                                    Single Link
+                                </button>
+                                <button onclick="setUrlType('multi')" id="urlTypeMulti"
+                                    class="py-2 px-4 rounded-xl border border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-350 text-xs font-semibold select-none cursor-pointer">
+                                    Multiple Links
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Single URL Input Form -->
+                        <div id="urlSingleContainer" class="flex flex-col gap-2 mt-2">
+                            <div class="relative">
+                                <i data-lucide="globe"
+                                    class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                                <input type="url" id="singleUrlInput" placeholder="https://example.com"
+                                    class="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-slate-200 transition-colors"
+                                    onkeyup="handleFormInput()" />
+                            </div>
+                            <p class="text-[10px] text-slate-500">Auto-updates the QR code canvas. Ensure link includes
+                                http:// or https://.</p>
+                        </div>
+
+                        <!-- Multi URL Input Form -->
+                        <div id="urlMultiContainer" class="hidden flex flex-col gap-2 mt-2">
+                            <textarea id="multiUrlInput" rows="4"
+                                placeholder="https://example.com/link-1&#10;https://example.com/link-2&#10;https://example.com/link-3"
+                                class="w-full p-4 bg-slate-900 border border-slate-800 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-slate-200 resize-none transition-colors"
+                                onkeyup="handleFormInput()"></textarea>
+                            <p class="text-[10px] text-slate-500">Enter each target web URL on a separate line. The
+                                matrix encodes custom newline listings.</p>
+                        </div>
+                    </div>
+
+                    <!-- PDF PANEL -->
+                    <div id="panel-pdf" class="form-panel hidden flex flex-col gap-4">
+                        <div class="border-2 border-dashed border-slate-800 hover:border-indigo-500/50 rounded-2xl p-6 text-center cursor-pointer hover:bg-slate-900/10 transition-colors flex flex-col items-center gap-2"
+                            onclick="document.getElementById('pdfFileInput').click()">
+                            <input type="file" id="pdfFileInput" accept="application/pdf" class="hidden"
+                                onchange="handlePdfUpload(event)">
+                            <div
+                                class="bg-red-500/10 border border-red-500/30 text-red-400 w-12 h-12 rounded-xl flex items-center justify-center">
+                                <i data-lucide="file-text" class="w-6 h-6"></i>
+                            </div>
+                            <span id="pdfFileLabel" class="text-sm font-semibold text-slate-300">Click to upload
+                                document PDF</span>
+                            <span class="text-[10px] text-slate-500">Maximum client-side size 20KB for high-density
+                                scan</span>
+                        </div>
+                        <div id="pdfStats"
+                            class="hidden text-xs bg-slate-900/60 rounded-xl p-3 border border-slate-850 text-slate-400 flex flex-col gap-1">
+                            <span class="font-semibold text-slate-300" id="pdfFileName">file-name.pdf</span>
+                            <span id="pdfFileSize">Size: 0 KB</span>
+                            <span class="text-[10px] text-yellow-400 mt-1" id="pdfFileWarning"></span>
+                        </div>
+                    </div>
+
+                    <!-- IMAGE PANEL -->
+                    <div id="panel-image" class="form-panel hidden flex flex-col gap-4">
+                        <div class="border-2 border-dashed border-slate-800 hover:border-indigo-500/50 rounded-2xl p-6 text-center cursor-pointer hover:bg-slate-900/10 transition-colors flex flex-col items-center gap-2"
+                            onclick="document.getElementById('imgFileInput').click()">
+                            <input type="file" id="imgFileInput" accept="image/*" class="hidden"
+                                onchange="handleImageUpload(event)">
+                            <div
+                                class="bg-amber-500/10 border border-amber-500/30 text-amber-400 w-12 h-12 rounded-xl flex items-center justify-center">
+                                <i data-lucide="image" class="w-6 h-6"></i>
+                            </div>
+                            <span id="imgFileLabel" class="text-sm font-semibold text-slate-300">Click to upload graphic
+                                image</span>
+                            <span class="text-[10px] text-slate-500">Supports PNG, JPEG, SVG or WebP formats</span>
+                        </div>
+                        <div id="imgStats"
+                            class="hidden text-xs bg-slate-900/60 rounded-xl p-3 border border-slate-850 text-slate-400 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                            <div class="flex flex-col gap-1">
+                                <span class="font-semibold text-slate-300" id="imgFileName">image.png</span>
+                                <span id="imgFileSize">Size: 0 KB</span>
+                                <span class="text-[10px] text-yellow-400 mt-1" id="imgFileWarning"></span>
+                            </div>
+                            <img id="imgPreview"
+                                class="w-12 h-12 object-cover rounded-lg border border-slate-700 bg-white" src=""
+                                alt="preview">
+                        </div>
+                    </div>
+
+                    <!-- CONTACT PANEL -->
+                    <div id="panel-contact" class="form-panel hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs text-slate-400 font-semibold">Full Name</label>
+                            <input type="text" id="contactName" placeholder="Ajin"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()">
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs text-slate-400 font-semibold">Phone Number</label>
+                            <input type="tel" id="contactPhone" placeholder="+1234567890"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()">
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs text-slate-400 font-semibold">Email Address</label>
+                            <input type="email" id="contactMail" placeholder="contact@example.com"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()">
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs text-slate-400 font-semibold">Organization</label>
+                            <input type="text" id="contactOrg" placeholder="OmniUtils Group"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()">
+                        </div>
+                    </div>
+
+                    <!-- EMAIL PANEL -->
+                    <div id="panel-mail" class="form-panel hidden flex flex-col gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs text-slate-400 font-semibold">Recipient Email</label>
+                                <input type="email" id="mailRecipient" placeholder="recipient@example.com"
+                                    class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                    onkeyup="handleFormInput()">
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-xs text-slate-400 font-semibold">Subject Line</label>
+                                <input type="text" id="mailSubject" placeholder="Inquiry about QR Tool"
+                                    class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                    onkeyup="handleFormInput()">
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs text-slate-400 font-semibold">Email Body Message</label>
+                            <textarea id="mailBody" rows="3" placeholder="Write details here..."
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 resize-none"
+                                onkeyup="handleFormInput()"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- TEXT PANEL -->
+                    <div id="panel-text" class="form-panel hidden flex flex-col gap-4">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-xs text-slate-400 font-semibold">Plain Text Message</label>
+                            <textarea id="plainTextContent" rows="5" placeholder="Enter custom message details..."
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 resize-none"
+                                onkeyup="handleFormInput()"></textarea>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Back to Dashboard -->
+        <a href="../../../index.html"
+            class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-350 text-sm font-semibold transition-colors duration-300">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Back to Dashboard</span>
+        </a>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 w-full bg-slate-950/60 py-6 transition-colors duration-300 mt-8">
+        <div
+            class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+            <p>© 2026 OmniUtils Core System. Private Client-Side Processor.</p>
+            <div class="flex gap-4">
+                <a href="#" class="hover:text-purple-400 transition-colors">Privacy Policy</a>
+                <span>•</span>
+                <a href="#" class="hover:text-purple-400 transition-colors">Terms of Use</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 text-slate-100 px-6 py-3 rounded-full shadow-2xl opacity-0 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2 text-xs font-semibold">
+        <i id="toastIcon" data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+        <span id="toastMsg">Ready</span>
+    </div>
+
+    <!-- QR Logic Script Elements -->
+    <script>
+        // Asset layout loaders
+        lucide.createIcons();
+
+        // App State Variables
+        let currentActiveTab = 'url';
+        let urlType = 'single';
+        let activeDotStyle = 'square'; // 'square' or 'rounded'
+        let customizePanelOpen = false;
+
+        // Default configuration for scanning
+        const defaultScanMessage = "welcome to qr scanner";
+
+        // Dynamic base path resolving helper
+        const canvas = document.getElementById('qrCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Init function on load
+        window.onload = function () {
+            // Color change label helpers
+            document.getElementById('colorDark').addEventListener('input', function () {
+                document.getElementById('colorDarkLabel').textContent = this.value.toUpperCase();
+            });
+            document.getElementById('colorLight').addEventListener('input', function () {
+                document.getElementById('colorLightLabel').textContent = this.value.toUpperCase();
+            });
+
+            // Draw initial QR code
+            generateQrCode();
+        };
+
+        // Tab Switcher Routine
+        function switchTab(tabId) {
+            // Visual indicator removals
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.form-panel').forEach(panel => panel.classList.add('hidden'));
+
+            // Target activations
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('panel-' + tabId).classList.remove('hidden');
+
+            currentActiveTab = tabId;
+            generateQrCode();
+        }
+
+        // Toggle URL sub-types
+        function setUrlType(type) {
+            urlType = type;
+            const singleBtn = document.getElementById('urlTypeSingle');
+            const multiBtn = document.getElementById('urlTypeMulti');
+
+            const singleContainer = document.getElementById('urlSingleContainer');
+            const multiContainer = document.getElementById('urlMultiContainer');
+
+            if (type === 'single') {
+                singleBtn.classList.replace('bg-slate-900', 'bg-indigo-500/10');
+                singleBtn.classList.replace('text-slate-400', 'text-white');
+                singleBtn.classList.add('border-indigo-500/50');
+                singleBtn.classList.remove('border-slate-800');
+
+                multiBtn.classList.replace('bg-indigo-500/10', 'bg-slate-900');
+                multiBtn.classList.replace('text-white', 'text-slate-400');
+                multiBtn.classList.remove('border-indigo-500/50');
+                multiBtn.classList.add('border-slate-800');
+
+                singleContainer.classList.remove('hidden');
+                multiContainer.classList.add('hidden');
+            } else {
+                multiBtn.classList.replace('bg-slate-900', 'bg-indigo-500/10');
+                multiBtn.classList.replace('text-slate-400', 'text-white');
+                multiBtn.classList.add('border-indigo-500/50');
+                multiBtn.classList.remove('border-slate-800');
+
+                singleBtn.classList.replace('bg-indigo-500/10', 'bg-slate-900');
+                singleBtn.classList.replace('text-white', 'text-slate-400');
+                singleBtn.classList.remove('border-indigo-500/50');
+                singleBtn.classList.add('border-slate-800');
+
+                multiContainer.classList.remove('hidden');
+                singleContainer.classList.add('hidden');
+            }
+            generateQrCode();
+        }
+
+        // Toggle Customize Panel accordion dropdown
+        function toggleCustomizePanel() {
+            customizePanelOpen = !customizePanelOpen;
+            const panel = document.getElementById('customizePanel');
+            const chevron = document.getElementById('customizeChevron');
+
+            if (customizePanelOpen) {
+                panel.style.maxHeight = '500px';
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                panel.style.maxHeight = '0px';
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Set Dot Style config
+        function setDotStyle(style) {
+            activeDotStyle = style;
+            const sqBtn = document.getElementById('dotStyleSquare');
+            const rdBtn = document.getElementById('dotStyleRounded');
+
+            if (style === 'square') {
+                sqBtn.className = "flex-1 py-1.5 rounded-lg border border-indigo-500/50 bg-indigo-500/10 text-white font-medium";
+                rdBtn.className = "flex-1 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-350 font-medium";
+            } else {
+                rdBtn.className = "flex-1 py-1.5 rounded-lg border border-indigo-500/50 bg-indigo-500/10 text-white font-medium";
+                sqBtn.className = "flex-1 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-350 font-medium";
+            }
+            generateQrCode();
+        }
+
+        // Toast helpers
+        function showToast(message, isSuccess = true) {
+            const toast = document.getElementById('toast');
+            const msgText = document.getElementById('toastMsg');
+            const icon = document.getElementById('toastIcon');
+
+            msgText.textContent = message;
+            if (isSuccess) {
+                icon.className = "w-4 h-4 text-emerald-400";
+                icon.setAttribute('data-lucide', 'check-circle');
+            } else {
+                icon.className = "w-4 h-4 text-rose-500";
+                icon.setAttribute('data-lucide', 'alert-circle');
+            }
+            lucide.createIcons();
+
+            toast.style.opacity = '100';
+            toast.style.transform = 'translateX(-50%) translateY(-10px)';
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(0)';
+            }, 3000);
+        }
+
+        // Realtime Form input listener hook
+        function handleFormInput() {
+            generateQrCode();
+        }
+
+        // PDF upload logic
+        let pdfEncodedString = "";
+        function handlePdfUpload(e) {
+            const file = e.target.files[0];
+            const stats = document.getElementById('pdfStats');
+            const label = document.getElementById('pdfFileLabel');
+            const fileNameEl = document.getElementById('pdfFileName');
+            const fileSizeEl = document.getElementById('pdfFileSize');
+            const warningEl = document.getElementById('pdfFileWarning');
+
+            if (!file) return;
+
+            stats.classList.remove('hidden');
+            label.textContent = "Upload new document";
+            fileNameEl.textContent = file.name;
+
+            const sizeKB = (file.size / 1024).toFixed(2);
+            fileSizeEl.textContent = `Size: ${sizeKB} KB`;
+
+            // Read file and encode
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+                const rawContent = evt.target.result;
+                // Due to QR code limitations, size limit warning
+                if (file.size > 1500) {
+                    warningEl.textContent = "⚠️ Large PDF. Standard text metadata will be encoded to prevent scanning density failures.";
+                    pdfEncodedString = `PDF Document:\nName: ${file.name}\nSize: ${sizeKB} KB\nDate: ${new Date(file.lastModified).toLocaleDateString()}`;
+                } else {
+                    warningEl.textContent = "";
+                    // Encode data uri representation
+                    pdfEncodedString = rawContent;
+                }
+                generateQrCode();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Image upload logic
+        let imgEncodedString = "";
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            const stats = document.getElementById('imgStats');
+            const label = document.getElementById('imgFileLabel');
+            const fileNameEl = document.getElementById('imgFileName');
+            const fileSizeEl = document.getElementById('imgFileSize');
+            const warningEl = document.getElementById('imgFileWarning');
+            const preview = document.getElementById('imgPreview');
+
+            if (!file) return;
+
+            stats.classList.remove('hidden');
+            label.textContent = "Upload new image";
+            fileNameEl.textContent = file.name;
+
+            const sizeKB = (file.size / 1024).toFixed(2);
+            fileSizeEl.textContent = `Size: ${sizeKB} KB`;
+
+            // Image preview loading
+            const previewReader = new FileReader();
+            previewReader.onload = function (evt) {
+                preview.src = evt.target.result;
+            };
+            previewReader.readAsDataURL(file);
+
+            // Raw encoding reader
+            const reader = new FileReader();
+            reader.onload = function (evt) {
+                const rawContent = evt.target.result;
+                if (file.size > 1500) {
+                    warningEl.textContent = "⚠️ Image too large. Compressing metadata encoding to secure offline readability.";
+                    imgEncodedString = `Image Asset:\nName: ${file.name}\nSize: ${sizeKB} KB\nDimension Info Ready`;
+                } else {
+                    warningEl.textContent = "";
+                    imgEncodedString = rawContent;
+                }
+                generateQrCode();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Assemble payload code based on active tab
+        function getQrPayload() {
+            switch (currentActiveTab) {
+                case 'url':
+                    if (urlType === 'single') {
+                        const urlVal = document.getElementById('singleUrlInput').value.trim();
+                        return urlVal || defaultScanMessage;
+                    } else {
+                        const multiLines = document.getElementById('multiUrlInput').value.trim();
+                        return multiLines || defaultScanMessage;
+                    }
+
+                case 'pdf':
+                    return pdfEncodedString || defaultScanMessage;
+
+                case 'image':
+                    return imgEncodedString || defaultScanMessage;
+
+                case 'contact':
+                    const n = document.getElementById('contactName').value.trim();
+                    const p = document.getElementById('contactPhone').value.trim();
+                    const m = document.getElementById('contactMail').value.trim();
+                    const o = document.getElementById('contactOrg').value.trim();
+
+                    if (!n && !p && !m && !o) {
+                        return defaultScanMessage;
+                    }
+
+                    // Format as standard vCard
+                    return `BEGIN:VCARD\nVERSION:3.0\nFN:${n}\nTEL:${p}\nEMAIL:${m}\nORG:${o}\nEND:VCARD`;
+
+                case 'mail':
+                    const recObj = document.getElementById('mailRecipient').value.trim();
+                    const subj = document.getElementById('mailSubject').value.trim();
+                    const body = document.getElementById('mailBody').value.trim();
+
+                    if (!recObj && !subj && !body) {
+                        return defaultScanMessage;
+                    }
+
+                    // mailto protocol
+                    return `mailto:${recObj}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+
+                case 'text':
+                    const tc = document.getElementById('plainTextContent').value.trim();
+                    return tc || defaultScanMessage;
+
+                default:
+                    return defaultScanMessage;
+            }
+        }
+
+        // MAIN QR GENERATION & CANVAS RENDERING ENGINE
+        function generateQrCode() {
+            try {
+                const payload = getQrPayload();
+
+                // Colors from inputs
+                const colorDark = document.getElementById('colorDark').value;
+                const colorLight = document.getElementById('colorLight').value;
+
+                // Setup stats warning
+                const statsEl = document.getElementById('qrStats');
+                if (payload === defaultScanMessage) {
+                    statsEl.textContent = "Ready to scan • Default welcome state";
+                    statsEl.classList.remove('text-indigo-400');
+                    statsEl.classList.add('text-slate-500');
+                } else {
+                    statsEl.textContent = `Scannable content active (${payload.length} chars)`;
+                    statsEl.classList.remove('text-slate-500');
+                    statsEl.classList.add('text-indigo-455');
+                }
+
+                // Generate raw bits via qrcode-generator
+                let typeNumber = 0; // standard autodetect
+                // Set higher error correction level to allow center logo placement
+                const qr = qrcode(typeNumber, 'H');
+                qr.addData(payload);
+                qr.make();
+
+                const moduleCount = qr.getModuleCount();
+                const cellSize = Math.floor(260 / moduleCount);
+                const margin = Math.floor((260 - (moduleCount * cellSize)) / 2);
+
+                // Reset canvas dimensions to prevent blurry edges
+                canvas.width = 260;
+                canvas.height = 260;
+
+                // Draw background
+                ctx.fillStyle = colorLight;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw matrix
+                ctx.fillStyle = colorDark;
+
+                for (let row = 0; row < moduleCount; row++) {
+                    for (let col = 0; col < moduleCount; col++) {
+                        if (qr.isDark(row, col)) {
+
+                            // Skip drawing in center region if a central logo is selected
+                            const logoStyle = document.getElementById('centerLogo').value;
+                            if (logoStyle !== 'none') {
+                                const centerStart = Math.floor(moduleCount / 2) - 2;
+                                const centerEnd = Math.floor(moduleCount / 2) + 2;
+                                if (row >= centerStart && row <= centerEnd && col >= centerStart && col <= centerEnd) {
+                                    continue; // Skip center pixels to leave slot transparent for logo
+                                }
+                            }
+
+                            // Compute coordinate metrics
+                            const xPos = col * cellSize + margin;
+                            const yPos = row * cellSize + margin;
+
+                            if (activeDotStyle === 'rounded') {
+                                // Determine if this module is part of the positioning finder patterns
+                                // Top-left: row < 7 && col < 7
+                                // Top-right: row < 7 && col >= moduleCount - 7
+                                // Bottom-left: row >= moduleCount - 7 && col < 7
+                                const isFinderPattern =
+                                    (row < 7 && col < 7) ||
+                                    (row < 7 && col >= moduleCount - 7) ||
+                                    (row >= moduleCount - 7 && col < 7);
+
+                                if (isFinderPattern) {
+                                    // Keepfinder squares solid or draw custom square curves
+                                    ctx.fillRect(xPos, yPos, cellSize, cellSize);
+                                } else {
+                                    // Draw beautiful circle dots
+                                    ctx.beginPath();
+                                    ctx.arc(xPos + cellSize / 2, yPos + cellSize / 2, cellSize * 0.42, 0, 2 * Math.PI);
+                                    ctx.fill();
+                                }
+                            } else {
+                                // Standard block squares representation
+                                ctx.fillRect(xPos, yPos, cellSize, cellSize);
+                            }
+                        }
+                    }
+                }
+
+                // Draw center logo overlays
+                const logoType = document.getElementById('centerLogo').value;
+                if (logoType !== 'none') {
+                    drawCenterLogo(logoType, colorDark, colorLight);
+                }
+
+            } catch (err) {
+                console.error("QR Code encoding failure: ", err);
+                // Fallback or warning if payload is too big for types bounds
+                showToast("Encoding limit exceeded. Try reducing input text size.", false);
+            }
+        }
+
+        // Logo rendering helper onto canvas center
+        function drawCenterLogo(logo, darkColor, lightColor) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const logoBoxSize = 42; // size in pixels of the center logo card
+
+            // Draw backdrop panel box for logo insulation
+            ctx.fillStyle = lightColor;
+            ctx.beginPath();
+            ctx.roundRect(centerX - logoBoxSize / 2, centerY - logoBoxSize / 2, logoBoxSize, logoBoxSize, 8);
+            ctx.fill();
+
+            // Slightly stroke container board
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = darkColor + "20"; // semi-transparent accent stroke
+            ctx.stroke();
+
+            // Render custom items based on selection
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            switch (logo) {
+                case 'star':
+                    ctx.font = "20px system-ui";
+                    ctx.fillText("⭐", centerX, centerY + 1);
+                    break;
+                case 'heart':
+                    ctx.font = "20px system-ui";
+                    ctx.fillText("❤️", centerX, centerY + 1);
+                    break;
+                case 'link':
+                    ctx.fillStyle = darkColor;
+                    ctx.font = "18px 'Segoe UI', system-ui, sans-serif";
+                    ctx.fillText("🔗", centerX, centerY);
+                    break;
+                case 'user':
+                    ctx.fillStyle = darkColor;
+                    ctx.font = "18px 'Segoe UI', system-ui, sans-serif";
+                    ctx.fillText("👤", centerX, centerY);
+                    break;
+                case 'email':
+                    ctx.fillStyle = darkColor;
+                    ctx.font = "18px 'Segoe UI', system-ui, sans-serif";
+                    ctx.fillText("✉️", centerX, centerY);
+                    break;
+            }
+        }
+
+        // Trigger local client PNG file download
+        function downloadQr() {
+            try {
+                const link = document.createElement('a');
+                link.download = 'omniutils-qrcode.png';
+                link.href = canvas.toDataURL("image/png");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("QR Code download triggered!");
+            } catch (err) {
+                console.error(err);
+                showToast("Error executing download", false);
+            }
+        }
+
+        // Share link or image copy routine
+        function shareQr() {
+            const payload = getQrPayload();
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'OmniUtils QR Code Payload',
+                    text: `Scan payload contents: ${payload.substring(0, 50)}...`,
+                    url: window.location.href
+                })
+                    .then(() => showToast("Content shared successfully!"))
+                    .catch(err => console.log(err));
+            } else {
+                // Direct clipboard copy of payload text contents
+                navigator.clipboard.writeText(payload)
+                    .then(() => {
+                        showToast("Payload text contents copied to clipboard!");
+                    })
+                    .catch(() => {
+                        // Fallback manual execution
+                        const dummy = document.createElement("textarea");
+                        document.body.appendChild(dummy);
+                        dummy.value = payload;
+                        dummy.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(dummy);
+                        showToast("Payload text contents copied to clipboard!");
+                    });
+            }
+        }
+    </script>
+</body>
+
+</html>
