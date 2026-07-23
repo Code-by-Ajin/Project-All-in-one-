@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
     <style>
         body {
@@ -106,11 +107,13 @@
                 <div class="flex flex-col items-center gap-4">
                     <span class="text-xs uppercase tracking-widest font-bold text-slate-500">Live Matrix Output</span>
 
-                    <div id="qrCanvasContainer" class="p-4 bg-white rounded-2xl flex items-center justify-center">
-                        <canvas id="qrCanvas" width="260" height="260" class="rounded-lg shadow-sm"></canvas>
+                    <div id="qrCanvasContainer"
+                        class="p-4 bg-white rounded-2xl flex items-center justify-center overflow-hidden">
+                        <canvas id="qrCanvas" class="rounded-lg shadow-sm"
+                            style="max-width: 260px; width: 100%; aspect-ratio: 1/1;"></canvas>
                     </div>
 
-                    <p id="qrStats" class="text-[10px] text-slate-500 tracking-wider">
+                    <p id="qrStats" class="text-[10px] text-slate-500 tracking-wider text-center">
                         Ready to scan • Default welcome state
                     </p>
                 </div>
@@ -301,8 +304,8 @@
                             </div>
                             <span id="pdfFileLabel" class="text-sm font-semibold text-slate-300">Click to upload
                                 document PDF</span>
-                            <span class="text-[10px] text-slate-500">Maximum client-side size 20KB for high-density
-                                scan</span>
+                            <span class="text-[10px] text-slate-500">Maximum physical QR capacity is ~3KB. For larger
+                                PDFs, host online and use the URL tab.</span>
                         </div>
                         <div id="pdfStats"
                             class="hidden text-xs bg-slate-900/60 rounded-xl p-3 border border-slate-850 text-slate-400 flex flex-col gap-1">
@@ -324,7 +327,8 @@
                             </div>
                             <span id="imgFileLabel" class="text-sm font-semibold text-slate-300">Click to upload graphic
                                 image</span>
-                            <span class="text-[10px] text-slate-500">Supports PNG, JPEG, SVG or WebP formats</span>
+                            <span class="text-[10px] text-slate-500">Supports full resolution PNG, JPEG, SVG or WebP
+                                formats</span>
                         </div>
                         <div id="imgStats"
                             class="hidden text-xs bg-slate-900/60 rounded-xl p-3 border border-slate-850 text-slate-400 flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -340,31 +344,94 @@
                     </div>
 
                     <!-- CONTACT PANEL -->
-                    <div id="panel-contact" class="form-panel hidden grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs text-slate-400 font-semibold">Full Name</label>
-                            <input type="text" id="contactName" placeholder="Ajin"
+                    <div id="panel-contact"
+                        class="form-panel hidden grid grid-cols-1 sm:grid-cols-2 gap-4 h-72 overflow-y-auto pr-2 custom-scrollbar">
+                        <style>
+                            .custom-scrollbar::-webkit-scrollbar {
+                                width: 6px;
+                            }
+
+                            .custom-scrollbar::-webkit-scrollbar-track {
+                                background: transparent;
+                            }
+
+                            .custom-scrollbar::-webkit-scrollbar-thumb {
+                                background: rgba(99, 102, 241, 0.3);
+                                border-radius: 10px;
+                            }
+                        </style>
+                        <div class="flex flex-col gap-1.5"><label
+                                class="text-xs text-slate-400 font-semibold">Prefix</label><input type="text"
+                                id="contactPrefix" placeholder="Mr./Ms."
                                 class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
-                                onkeyup="handleFormInput()">
-                        </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs text-slate-400 font-semibold">Phone Number</label>
-                            <input type="tel" id="contactPhone" placeholder="+1234567890"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-xs text-slate-400 font-semibold">First
+                                Name</label><input type="text" id="contactFirst" placeholder="Ajin"
                                 class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
-                                onkeyup="handleFormInput()">
-                        </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs text-slate-400 font-semibold">Email Address</label>
-                            <input type="email" id="contactMail" placeholder="contact@example.com"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-xs text-slate-400 font-semibold">Last
+                                Name</label><input type="text" id="contactLast" placeholder="Doe"
                                 class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
-                                onkeyup="handleFormInput()">
-                        </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-xs text-slate-400 font-semibold">Organization</label>
-                            <input type="text" id="contactOrg" placeholder="OmniUtils Group"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label
+                                class="text-xs text-slate-400 font-semibold">Organization</label><input type="text"
+                                id="contactOrg" placeholder="OmniUtils Group"
                                 class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
-                                onkeyup="handleFormInput()">
-                        </div>
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label
+                                class="text-xs text-slate-400 font-semibold">Title</label><input type="text"
+                                id="contactTitle" placeholder="Developer"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label
+                                class="text-xs text-slate-400 font-semibold">Email</label><input type="email"
+                                id="contactMail" placeholder="contact@example.com"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label
+                                class="text-xs text-slate-400 font-semibold">Mobile</label><input type="tel"
+                                id="contactMobile" placeholder="+1234567890"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label class="text-xs text-slate-400 font-semibold">Home
+                                Phone</label><input type="tel" id="contactHomePhone" placeholder="+0987654321"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label
+                                class="text-xs text-slate-400 font-semibold">Fax</label><input type="tel"
+                                id="contactFax" placeholder="+1122334455"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label
+                                class="text-xs text-slate-400 font-semibold">Street</label><input type="text"
+                                id="contactStreet" placeholder="123 Main St"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label
+                                class="text-xs text-slate-400 font-semibold">City</label><input type="text"
+                                id="contactCity" placeholder="New York"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label
+                                class="text-xs text-slate-400 font-semibold">State/Region</label><input type="text"
+                                id="contactState" placeholder="NY"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label
+                                class="text-xs text-slate-400 font-semibold">Postcode</label><input type="text"
+                                id="contactZip" placeholder="10001"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5"><label
+                                class="text-xs text-slate-400 font-semibold">Country</label><input type="text"
+                                id="contactCountry" placeholder="USA"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()"></div>
+                        <div class="flex flex-col gap-1.5 sm:col-span-2"><label
+                                class="text-xs text-slate-400 font-semibold">Website/URL/Social</label><input type="url"
+                                id="contactUrl" placeholder="https://example.com"
+                                class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
+                                onkeyup="handleFormInput()"></div>
                     </div>
 
                     <!-- EMAIL PANEL -->
@@ -394,8 +461,12 @@
                     <!-- TEXT PANEL -->
                     <div id="panel-text" class="form-panel hidden flex flex-col gap-4">
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-xs text-slate-400 font-semibold">Plain Text Message</label>
-                            <textarea id="plainTextContent" rows="5" placeholder="Enter custom message details..."
+                            <label class="text-xs text-slate-400 font-semibold flex justify-between">
+                                <span>Plain Text Message</span>
+                                <span class="text-[10px] text-slate-500 font-normal">Max 1250 chars</span>
+                            </label>
+                            <textarea id="plainTextContent" rows="10" maxlength="1250"
+                                placeholder="Enter custom message details..."
                                 class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 resize-none"
                                 onkeyup="handleFormInput()"></textarea>
                         </div>
@@ -447,8 +518,16 @@
         let activeDotStyle = 'square'; // 'square' or 'rounded'
         let customizePanelOpen = false;
 
+        // WebRTC P2P State
+        let p2pPeer = null;
+        let p2pPeerId = null;
+        let p2pFileBlob = null;
+        let p2pFileName = "";
+        let p2pFileType = "";
+        let p2pFileSize = 0;
+
         // Default configuration for scanning
-        const defaultScanMessage = "welcome to qr scanner";
+        const defaultScanMessage = "Welcome to qr code generator";
 
         // Dynamic base path resolving helper
         const canvas = document.getElementById('qrCanvas');
@@ -582,8 +661,46 @@
             generateQrCode();
         }
 
-        // PDF upload logic
-        let pdfEncodedString = "";
+        // P2P Initialization Engine
+        function initP2P(file, onReadyCallback) {
+            if (p2pPeer) {
+                p2pPeer.destroy();
+            }
+            p2pPeer = new Peer();
+            p2pFileBlob = file;
+            p2pFileName = file.name;
+            p2pFileType = file.type;
+            p2pFileSize = file.size;
+
+            p2pPeer.on('open', function (id) {
+                p2pPeerId = id;
+                console.log('WebRTC Host ID ready: ' + id);
+                if (onReadyCallback) onReadyCallback();
+            });
+
+            p2pPeer.on('connection', function (conn) {
+                console.log('Peer connected!');
+                conn.on('data', function (data) {
+                    if (data === 'request_file') {
+                        // Stream the file blob over DataChannel
+                        conn.send({
+                            file: p2pFileBlob,
+                            name: p2pFileName,
+                            type: p2pFileType,
+                            size: p2pFileSize
+                        });
+                        showToast("P2P Transfer Started!");
+                    }
+                });
+            });
+
+            p2pPeer.on('error', function (err) {
+                console.error('PeerJS error:', err);
+                showToast("P2P Connection Error", false);
+            });
+        }
+
+        // PDF upload logic (P2P Host)
         function handlePdfUpload(e) {
             const file = e.target.files[0];
             const stats = document.getElementById('pdfStats');
@@ -600,27 +717,16 @@
 
             const sizeKB = (file.size / 1024).toFixed(2);
             fileSizeEl.textContent = `Size: ${sizeKB} KB`;
+            warningEl.className = "text-[10px] text-indigo-400 mt-1 font-semibold";
+            warningEl.textContent = "⏳ Initializing P2P Host Network...";
 
-            // Read file and encode
-            const reader = new FileReader();
-            reader.onload = function (evt) {
-                const rawContent = evt.target.result;
-                // Due to QR code limitations, size limit warning
-                if (file.size > 1500) {
-                    warningEl.textContent = "⚠️ Large PDF. Standard text metadata will be encoded to prevent scanning density failures.";
-                    pdfEncodedString = `PDF Document:\nName: ${file.name}\nSize: ${sizeKB} KB\nDate: ${new Date(file.lastModified).toLocaleDateString()}`;
-                } else {
-                    warningEl.textContent = "";
-                    // Encode data uri representation
-                    pdfEncodedString = rawContent;
-                }
+            initP2P(file, function () {
+                warningEl.textContent = "📡 Hosting P2P... Please keep this tab open until the scan is complete.";
                 generateQrCode();
-            };
-            reader.readAsDataURL(file);
+            });
         }
 
-        // Image upload logic
-        let imgEncodedString = "";
+        // Image upload logic (P2P Host)
         function handleImageUpload(e) {
             const file = e.target.files[0];
             const stats = document.getElementById('imgStats');
@@ -638,6 +744,7 @@
 
             const sizeKB = (file.size / 1024).toFixed(2);
             fileSizeEl.textContent = `Size: ${sizeKB} KB`;
+            warningEl.className = "text-[10px] text-indigo-400 mt-1 font-semibold";
 
             // Image preview loading
             const previewReader = new FileReader();
@@ -646,20 +753,12 @@
             };
             previewReader.readAsDataURL(file);
 
-            // Raw encoding reader
-            const reader = new FileReader();
-            reader.onload = function (evt) {
-                const rawContent = evt.target.result;
-                if (file.size > 1500) {
-                    warningEl.textContent = "⚠️ Image too large. Compressing metadata encoding to secure offline readability.";
-                    imgEncodedString = `Image Asset:\nName: ${file.name}\nSize: ${sizeKB} KB\nDimension Info Ready`;
-                } else {
-                    warningEl.textContent = "";
-                    imgEncodedString = rawContent;
-                }
+            warningEl.textContent = "⏳ Initializing P2P Host Network...";
+
+            initP2P(file, function () {
+                warningEl.textContent = "📡 Hosting P2P... Please keep this tab open until the scan is complete.";
                 generateQrCode();
-            };
-            reader.readAsDataURL(file);
+            });
         }
 
         // Assemble payload code based on active tab
@@ -675,23 +774,53 @@
                     }
 
                 case 'pdf':
-                    return pdfEncodedString || defaultScanMessage;
-
                 case 'image':
-                    return imgEncodedString || defaultScanMessage;
+                    if (p2pPeerId) {
+                        // Generate absolute URL for the receiver endpoint
+                        let currentUrl = window.location.href;
+                        // Determine base path, handle search/hash if any
+                        let baseUrl = currentUrl.split('?')[0].split('#')[0];
+                        let targetUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/')) + '/p2p_receive.html';
+                        return `${targetUrl}?id=${p2pPeerId}&name=${encodeURIComponent(p2pFileName)}&type=${encodeURIComponent(p2pFileType)}&size=${p2pFileSize}`;
+                    }
+                    return defaultScanMessage;
 
                 case 'contact':
-                    const n = document.getElementById('contactName').value.trim();
-                    const p = document.getElementById('contactPhone').value.trim();
-                    const m = document.getElementById('contactMail').value.trim();
-                    const o = document.getElementById('contactOrg').value.trim();
+                    const pr = document.getElementById('contactPrefix').value.trim();
+                    const fn = document.getElementById('contactFirst').value.trim();
+                    const ln = document.getElementById('contactLast').value.trim();
+                    const org = document.getElementById('contactOrg').value.trim();
+                    const title = document.getElementById('contactTitle').value.trim();
+                    const eml = document.getElementById('contactMail').value.trim();
+                    const mob = document.getElementById('contactMobile').value.trim();
+                    const hph = document.getElementById('contactHomePhone').value.trim();
+                    const fax = document.getElementById('contactFax').value.trim();
+                    const str = document.getElementById('contactStreet').value.trim();
+                    const cty = document.getElementById('contactCity').value.trim();
+                    const stt = document.getElementById('contactState').value.trim();
+                    const zip = document.getElementById('contactZip').value.trim();
+                    const ctr = document.getElementById('contactCountry').value.trim();
+                    const url = document.getElementById('contactUrl').value.trim();
 
-                    if (!n && !p && !m && !o) {
+                    if (!fn && !ln && !mob && !eml && !org) {
                         return defaultScanMessage;
                     }
 
-                    // Format as standard vCard
-                    return `BEGIN:VCARD\nVERSION:3.0\nFN:${n}\nTEL:${p}\nEMAIL:${m}\nORG:${o}\nEND:VCARD`;
+                    let vcard = `BEGIN:VCARD\nVERSION:3.0\n`;
+                    vcard += `N:${ln};${fn};;${pr};\n`;
+                    vcard += `FN:${pr ? pr + ' ' : ''}${fn} ${ln}\n`.trim() + '\n';
+                    if (org) vcard += `ORG:${org}\n`;
+                    if (title) vcard += `TITLE:${title}\n`;
+                    if (eml) vcard += `EMAIL;type=INTERNET;type=WORK;type=pref:${eml}\n`;
+                    if (mob) vcard += `TEL;type=CELL;type=VOICE;type=pref:${mob}\n`;
+                    if (hph) vcard += `TEL;type=HOME;type=VOICE:${hph}\n`;
+                    if (fax) vcard += `TEL;type=WORK;type=FAX:${fax}\n`;
+                    if (str || cty || stt || zip || ctr) {
+                        vcard += `ADR;type=WORK:;;${str};${cty};${stt};${zip};${ctr}\n`;
+                    }
+                    if (url) vcard += `URL:${url}\n`;
+                    vcard += `END:VCARD`;
+                    return vcard;
 
                 case 'mail':
                     const recObj = document.getElementById('mailRecipient').value.trim();
@@ -743,12 +872,15 @@
                 qr.make();
 
                 const moduleCount = qr.getModuleCount();
-                const cellSize = Math.floor(260 / moduleCount);
-                const margin = Math.floor((260 - (moduleCount * cellSize)) / 2);
+                // Fix: Dynamic sizing to prevent cell shrinkage & blur
+                const preferredCellSize = 10; // high res constant cell size
+                const cellSize = preferredCellSize;
+                const margin = cellSize * 2; // two modules margin
+                const actualSize = (moduleCount * cellSize) + (margin * 2);
 
-                // Reset canvas dimensions to prevent blurry edges
-                canvas.width = 260;
-                canvas.height = 260;
+                // Reset canvas dimensions to high-res dynamic sizes
+                canvas.width = actualSize;
+                canvas.height = actualSize;
 
                 // Draw background
                 ctx.fillStyle = colorLight;

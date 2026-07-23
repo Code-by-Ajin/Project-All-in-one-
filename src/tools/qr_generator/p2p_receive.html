@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receiving File | OmniUtils P2P</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body {
+            background-color: #030712;
+            color: #f8fafc;
+            background-image:
+                radial-gradient(circle at 10% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 90% 85%, rgba(168, 85, 247, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-panel {
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="glass-panel w-full max-w-md rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center gap-6">
+        <div id="iconContainer" class="w-20 h-20 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+            <i data-lucide="radio" class="w-10 h-10 animate-pulse"></i>
+        </div>
+
+        <div>
+            <h1 id="statusTitle" class="text-2xl font-bold text-white mb-2">Connecting to Host...</h1>
+            <p id="statusDesc" class="text-slate-400 text-sm">Establishing secure Peer-to-Peer connection</p>
+        </div>
+
+        <div class="w-full bg-slate-900/60 rounded-xl p-4 border border-slate-800 flex flex-col gap-2 text-left">
+            <span class="text-xs uppercase tracking-widest font-bold text-slate-500 block mb-1">Incoming File</span>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-slate-300 font-semibold truncate max-w-[70%]" id="fileName">Unknown File</span>
+                <span class="text-slate-500" id="fileSize">0 KB</span>
+            </div>
+        </div>
+
+        <div id="progressContainer" class="w-full hidden">
+            <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                <div id="progressBar" class="h-full bg-indigo-500 w-0 transition-all duration-300"></div>
+            </div>
+            <p class="text-xs text-slate-500 mt-2 text-center">Transferring data...</p>
+        </div>
+
+        <div id="previewContainer" class="w-full hidden flex-col items-center gap-4 mt-2">
+            <img id="imagePreview" class="max-w-full max-h-48 rounded-lg border border-slate-700 object-contain hidden" />
+            <button id="downloadBtn" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-500/20 hidden">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                Save to Device
+            </button>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Parse URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const hostId = urlParams.get('id');
+        const fileName = urlParams.get('name') || 'unknown_file';
+        const fileType = urlParams.get('type') || 'application/octet-stream';
+        const fileSize = parseInt(urlParams.get('size') || '0', 10);
+
+        document.getElementById('fileName').textContent = fileName;
+        document.getElementById('fileSize').textContent = (fileSize / 1024).toFixed(2) + ' KB';
+
+        if (!hostId) {
+            document.getElementById('statusTitle').textContent = "Invalid Link";
+            document.getElementById('statusDesc').textContent = "No host ID provided in URL.";
+            document.getElementById('iconContainer').className = "w-20 h-20 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400";
+            document.getElementById('iconContainer').innerHTML = '<i data-lucide="alert-triangle" class="w-10 h-10"></i>';
+            lucide.createIcons();
+        } else {
+            // Initialize PeerJS
+            const peer = new Peer();
+
+            peer.on('open', function(id) {
+                document.getElementById('statusDesc').textContent = "Connecting to remote device...";
+                
+                // Connect to host
+                const conn = peer.connect(hostId, { reliable: true });
+
+                conn.on('open', function() {
+                    document.getElementById('statusTitle').textContent = "Connected!";
+                    document.getElementById('statusDesc').textContent = "Downloading file directly from host...";
+                    document.getElementById('progressContainer').classList.remove('hidden');
+                    document.getElementById('progressBar').style.width = '50%'; // Indeterminate visual
+                    
+                    // Request the file
+                    conn.send('request_file');
+                });
+
+                conn.on('data', function(data) {
+                    if (data && data.file) {
+                        document.getElementById('statusTitle').textContent = "Transfer Complete!";
+                        document.getElementById('statusDesc').textContent = "File received successfully.";
+                        document.getElementById('progressContainer').classList.add('hidden');
+                        document.getElementById('progressBar').style.width = '100%';
+
+                        document.getElementById('iconContainer').className = "w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400";
+                        document.getElementById('iconContainer').innerHTML = '<i data-lucide="check-circle" class="w-10 h-10"></i>';
+                        lucide.createIcons();
+
+                        const receivedBlob = new Blob([data.file], { type: data.type });
+                        const objectUrl = URL.createObjectURL(receivedBlob);
+
+                        const previewContainer = document.getElementById('previewContainer');
+                        const downloadBtn = document.getElementById('downloadBtn');
+                        previewContainer.classList.remove('hidden');
+                        downloadBtn.classList.remove('hidden');
+
+                        downloadBtn.onclick = function() {
+                            const a = document.createElement('a');
+                            a.href = objectUrl;
+                            a.download = data.name;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                        };
+
+                        if (data.type.startsWith('image/')) {
+                            const imgPreview = document.getElementById('imagePreview');
+                            imgPreview.src = objectUrl;
+                            imgPreview.classList.remove('hidden');
+                        } else {
+                            // Automatically trigger download for non-images (like PDFs)
+                            downloadBtn.click();
+                        }
+                        
+                        // Close connection
+                        setTimeout(() => conn.close(), 1000);
+                    }
+                });
+
+                conn.on('error', function(err) {
+                    document.getElementById('statusTitle').textContent = "Transfer Failed";
+                    document.getElementById('statusDesc').textContent = "Host may have disconnected or closed the tab.";
+                    document.getElementById('progressContainer').classList.add('hidden');
+                    document.getElementById('iconContainer').className = "w-20 h-20 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400";
+                    document.getElementById('iconContainer').innerHTML = '<i data-lucide="x-circle" class="w-10 h-10"></i>';
+                    lucide.createIcons();
+                });
+            });
+
+            peer.on('error', function(err) {
+                console.error(err);
+                document.getElementById('statusTitle').textContent = "Connection Error";
+                document.getElementById('statusDesc').textContent = "Could not reach signaling server or host.";
+                document.getElementById('iconContainer').className = "w-20 h-20 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400";
+                document.getElementById('iconContainer').innerHTML = '<i data-lucide="wifi-off" class="w-10 h-10"></i>';
+                lucide.createIcons();
+            });
+        }
+    </script>
+</body>
+</html>
