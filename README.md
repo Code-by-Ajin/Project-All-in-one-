@@ -34,7 +34,8 @@ Unlike traditional web converters that rely on heavy cloud servers, **OmniUtils 
 
 To ensure scalability and keep the codebase clean, tools are isolated into dedicated modular subdirectories:
 
-```text
+## text
+
 omniutils-app/
 ├── index.html                 # Main dashboard UI shell
 ├── favicon.ico                # Site tab icon
