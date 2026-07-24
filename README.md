@@ -54,3 +54,28 @@ omniutils-app/
         ├── stegano-crypt/     # LSB Image Cryptography
         ├── pdf-transformer/   # Client-side PDF Merger/Splitter
         └── image-optimizer/   # Canvas Compressor & Background Remover
+
+
+---
+
+
+## 🔒 Security & Privacy Model
+Local Browser Runtime: All computations run locally via JavaScript, HTML5 Canvas, and Web Workers.
+
+End-to-End Encrypted Transfer: Uses WebRTC with DTLS/SRTP encryption for peer-to-peer file sharing—meaning no central servers ever store or see your data.
+
+No External API Dependencies: Core tools operate without third-party server endpoints.
+
+##  🚀 Getting Started
+Since this is a client-side application, running it locally is as easy as opening an HTML file:
+
+##  Clone the repository:
+
+Bash
+git clone [https://github.com/code-by-ajin/Project-All-in-one-.git](https://github.com/code-by-ajin/Project-All-in-one-.git)
+
+Open the project:
+Simply open index.html in any modern web browser (Chrome, Firefox, Edge, Safari), or serve it via a local static server like VS Code's Live Server extension.
+
+##  📝 License & Open Source
+Distributed under the MIT License. See LICENSE for more information.
